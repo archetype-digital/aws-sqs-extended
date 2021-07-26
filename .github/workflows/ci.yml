@@ -61,4 +61,5 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
       - run: twine check dist/*
-      - run: twine upload dist/*
+      - if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        run: twine upload dist/*
