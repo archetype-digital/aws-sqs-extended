@@ -1,0 +1,64 @@
+# Copyright (c) 2021. Archetype Digital Inc. All rights reserved.
+
+# The copyright to the computer software herein is the property of
+# Archetype Digital Inc. The software may be used and/or copied only
+# with the written permission of Archetype Digital Inc. or in accordance
+# with the terms and conditions stipulated in the agreement/contract
+# under which the software has been supplied.
+
+name: ci
+on:
+  push:
+    branches:
+      - main
+    tags: 
+      - release-*
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: [ '3.7', '3.8', '3.9' ]
+    steps:
+      # installation
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.pyver }}
+          architecture: 'x64'
+      # initialization
+      - run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install -e ".[dev]"
+        pip install -e ".[test]"
+      # lint check and test
+      - run: flake8 aws_sqs_ext_client --count --show-source --statistics
+      - run: python setup.py test
+      - run: coverage report --fail-under=90
+  # split job to push artifact because only one artifact should be deployed
+  push:
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      TWINE_USERNAME: Mon
+      TWINE_PASSWORD: Tue
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+      - run: python -m pip install --upgrade pip
+      - run: pip install setuptools wheel twine
+      - run: python setup.py sdist bdist_wheel
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - run: twine check dist/*
+      - run: twine upload dist/*
