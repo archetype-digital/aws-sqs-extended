@@ -58,7 +58,7 @@ jobs:
       - run: python setup.py sdist bdist_wheel
       - run: twine check dist/*
       - name: twine upload dist/*
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
