@@ -26,7 +26,7 @@ import boto3
 
 from .session import SQSExtendedSession
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 # replace the original Session with a child Session
 boto3.session.Session = SQSExtendedSession

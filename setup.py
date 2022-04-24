@@ -33,7 +33,7 @@ from setuptools import find_packages, setup
 sys.path.append('./')
 
 PACKAGE_NAME = 'aws_sqs_ext_client'
-requires = ['boto3~=1.17']
+requires = ['boto3~=1.21']
 extras_requires = {
     'dev': ['flake8', 'autopep8'],
     'test': ['pytest', 'pytest-cov', 'moto[all]'],
