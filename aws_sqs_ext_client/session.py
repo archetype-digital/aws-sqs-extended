@@ -25,6 +25,7 @@ SOFTWARE.
 
 import logging
 import os
+from typing import Optional
 
 import boto3
 
@@ -48,7 +49,7 @@ class SQSExtendedSession(boto3.session.Session):
         self, s3_bucket_name: str, always_through_s3: bool = False,
         message_size_threshold: int = (
             SQSExtendedConstants.DEFAULT_MESSAGE_SIZE_THRESHOLD.value),
-        s3_bucket_params: dict = {'ACL': 'private'},
+        s3_bucket_params: Optional[dict] = {'ACL': 'private'},
     ) -> None:
         """Initialize the SQS extended messaging.
         This method craetes S3 bucket if not exists, initializes a class for
@@ -62,21 +63,30 @@ class SQSExtendedSession(boto3.session.Session):
         :type message_size_threshold: int
         :param message_size_threshold: threshold to put actual message in S3
             (optional: default value is the SQS limitation 262,144)
+        :param s3_bucket_params: parameter for S3 bucket creation
+            used to store huge messages, like `{'ACL': 'private'}`.
+            If None is set on this param, this module won't create S3 bucket.
+            It's recommended to create a bucket for object storing
+            preliminarily, witout creation by this module because
+            you should create a bucket with some options, like the specific
+            finite object lifecycle configured by
+            `put_bucket_lifecycle_configuration`.
         """
         # create S3 bucket if needed
-        region = os.getenv('AWS_DEFAULT_REGION')
-        if region and 'CreateBucketConfiguration' not in s3_bucket_params:
-            s3_bucket_params['CreateBucketConfiguration'] = {
-                'LocationConstraint': region
-            }
+        if s3_bucket_params is not None:
+            region = os.getenv('AWS_DEFAULT_REGION')
+            if region and 'CreateBucketConfiguration' not in s3_bucket_params:
+                s3_bucket_params['CreateBucketConfiguration'] = {
+                    'LocationConstraint': region
+                }
 
-        s3_bucket_params['Bucket'] = s3_bucket_name
-        s3 = self.client('s3')
-        try:
-            s3.create_bucket(**s3_bucket_params)
-            logger.info(f'bucket {s3_bucket_name} was created')
-        except s3.exceptions.BucketAlreadyOwnedByYou:
-            pass
+            s3_bucket_params['Bucket'] = s3_bucket_name
+            s3 = self.client('s3')
+            try:
+                s3.create_bucket(**s3_bucket_params)
+                logger.info(f'bucket {s3_bucket_name} was created')
+            except s3.exceptions.BucketAlreadyOwnedByYou:
+                pass
 
         # initialize sqs extention
         sqs = SQSExtendedMessage(

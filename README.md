@@ -56,12 +56,17 @@ session = boto3.session.Session()
 # can add the following options
 # always_through_s3: bool: enable to store even small message into S3 (by default, it's False)
 # message_size_threshold: int: like 2*10. enable to change the threshold (default value is 2**18)
-# s3_bucket_params: dict: add parameters to create the bucket where this lib stores the messages.
-#   if you don't specify AWS_DEFAULT_REGION on the environment variables,
-#   you need to specify the location constrain
-#   by {'CreateBucketConfiguration': {'LocationConstraint': YOUR_REGION}}
-#   available other parameters are shown in
+# s3_bucket_params: dict: add parameters to create/check the bucket where this lib stores the messages.
+#   By default, this parameter is `{'ACL': 'private'}`.
+#   If you already created S3 bucket for storing huge messages and utilize it, set `s3_bucket_params=None`.
+#   With non-None parameter, if you don't specify AWS_DEFAULT_REGION on the environment variables,
+#   you need to specify the location constrain by
+#   {'CreateBucketConfiguration': {'LocationConstraint': YOUR_REGION}}.
+#   Available other parameters are shown in
 #   https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.create_bucket
+# 
+# It's recommended to create a bucket for object storing preliminarily even though this module gives you automatic creation functionality.
+# That's because you should create a bucket with some options, like the specific finite object lifecycle configured by `put_bucket_lifecycle_configuration`.
 session.extend_sqs('S3_BUCKET_NAME_TO_STORE_MESSAGES')
 ```
 
@@ -202,6 +207,15 @@ res = queue.delete_messages_extended(Entries=receipt_handles)
 ```
 
 ## Test
+
+`tests/integration/test_all.py` gives you clues about how to use this module with AWS resources.
+
+```sh
+# AWS credentials, like AWS_ACCESS_KEY_ID, should be set preliminarily
+python tests/integration/test_all.py
+```
+
+`tests/units` includes unit tests.
 
 ```sh
 export TEST_THRESHOLD=90

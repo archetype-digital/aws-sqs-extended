@@ -34,7 +34,6 @@ import aws_sqs_ext_client  # noqa: F401, E402
 
 INTEGRATION_TEST_QUEUE_NAME = str(uuid.uuid4())  # 'test-sqs-queue-123456789'
 INTEGRATION_TEST_BUCKET_NAME = str(uuid.uuid4())  # 'test-sqs-bucket-123456789'
-# str(uuid.uuid4())
 
 
 def mkdata():
@@ -292,6 +291,34 @@ def small_data_messaging_as_large_data_with_resource_to_fifo():
         r.delete_extended()
 
 
+def small_data_messaging_as_large_data_with_bucket_creation():
+    print('=========================================================')
+    print('test/example to send small message without s3 bucket creation')
+    print('s3 bucket must be created by other tests before this')
+    session = boto3.session.Session()
+    session.extend_sqs(
+        INTEGRATION_TEST_BUCKET_NAME, always_through_s3=True,
+        s3_bucket_params=None)
+
+    body = '{"message": "small text"}'
+
+    sqs = session.resource('sqs')
+    queue = sqs.create_queue(
+        QueueName=INTEGRATION_TEST_QUEUE_NAME,
+        Attributes={'DelaySeconds': '5'})
+
+    res = queue.send_message_extended(MessageBody=body)
+
+    time.sleep(2)
+    res = queue.receive_messages_extended(
+        MessageAttributeNames=['All'], MaxNumberOfMessages=10,
+        WaitTimeSeconds=5)
+
+    for r in res:
+        print(f'got a message, beginning of which is {r.body[0:100]}')
+        r.delete_extended()
+
+
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
@@ -306,5 +333,6 @@ if __name__ == "__main__":
     large_data_messaging_with_client()
     multiple_large_data_messaging_with_client()
     small_data_messaging_as_large_data_with_resource_to_fifo()
+    small_data_messaging_as_large_data_with_bucket_creation()
 
     cleanup()
