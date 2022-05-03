@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2022-05-03
+### Updated
+- support the session extension without creating S3 bucket
+
 ## [0.0.5] - 2022-04-24
 ### Updated
 - support the latest boto3

@@ -90,6 +90,16 @@ def test_extend_session_w_s3params(s3_client):
     assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 
 
+def test_extend_session_w_none_s3params(s3_client):
+    """Skip bucket creation"""
+    bucket_name = 'test-sqs-message-bucket'
+    session = SQSExtendedSession()
+    session.extend_sqs(bucket_name, s3_bucket_params=None)
+
+    with pytest.raises(s3_client.exceptions.NoSuchBucket):
+        s3_client.list_objects_v2(Bucket=bucket_name)
+
+
 # @mock_s3
 # def test_extend_session_w_already_exist_bucket(
 #         aws_credentials, bucket_name, region):
