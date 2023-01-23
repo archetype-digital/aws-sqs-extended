@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.0.7] - 2023-01-24
+### Updated
+- update boto3 version
+- remove 3.7 support due to flake8 disability
+
 ## [0.0.6] - 2022-05-03
 ### Updated
 - support the session extension without creating S3 bucket
